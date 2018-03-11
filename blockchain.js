@@ -106,6 +106,7 @@ class Blockchain {
 
   registerNode(address) {
     this.nodes.add(address);
+    console.log(this.nodes);
   }
 
   validChain(chain) {
@@ -140,6 +141,7 @@ class Blockchain {
 
     async function testNodes() {
       for (let node of this.nodes) {
+        console.log('node: ', node, `${node}/chain`);
         let response = await axios.get(`${node}/chain`);
 
         let chain = response.chain;
@@ -149,16 +151,15 @@ class Blockchain {
           newChain = chain;
         }
       }
+      if (newChain) {
+        this.chain = newChain;
+        return true;
+      }
+
+      return false;
     }
 
-    testNodes();
-
-    if (newChain) {
-      this.chain = newChain;
-      return true;
-    }
-
-    return false;
+    return testNodes();
 
   }
 
