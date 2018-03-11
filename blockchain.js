@@ -1,4 +1,5 @@
 import hash from "hash.js";
+import axios from "axios";
 
 let sha256 = hash.sha256;
 
@@ -26,7 +27,7 @@ class Blockchain {
       timestamp: Date.now(),
       transactions: this.currentTransactions,
       proof: proof,
-      previous_hash: previousHash, //|| self.hash(self.chain[-1]),
+      previousHash: previousHash, //|| self.hash(self.chain[-1]),
     }
 
     this.currentTransactions = [];
@@ -103,12 +104,61 @@ class Blockchain {
     return guessHash.substring(0,3) === '000';
   }
 
-
   registerNode(address) {
     this.nodes.add(address);
   }
 
   validChain(chain) {
+    let lastBlock = this.chain[0];
+    let idx = 1;
+
+    while (idx < chain.length) {
+      let block = chain[idx];
+
+      if (block.previousHash !== this.hash(lastBlock)) {
+        return false;
+      }
+
+      if (!this.validProof(lastBlock.proof, block.proof)) {
+        return false;
+      }
+
+      lastBlock = block;
+      idx++;
+    }
+
+    return true;
+  }
+
+  /*
+  This is our Consensus Algorithm, it resolves conflicts by replacing our chain with the longest one in the network.
+  @return {Boolean} True if our chain was replaced, False if not
+  */
+  resolveConflicts() {
+    let newChain;
+    let maxLength = this.chain.length;
+
+    async function testNodes() {
+      for (let node of this.nodes) {
+        let response = await axios.get(`${node}/chain`);
+
+        let chain = response.chain;
+
+        if (chain.length > maxLength && this.validChain(chain)) {
+          maxLength = chain.length;
+          newChain = chain;
+        }
+      }
+    }
+
+    testNodes();
+
+    if (newChain) {
+      this.chain = newChain;
+      return true;
+    }
+
+    return false;
 
   }
 
