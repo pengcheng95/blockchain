@@ -2,14 +2,15 @@ import hash from "hash.js";
 
 let sha256 = hash.sha256;
 
-console.log(sha256().update('abc').digest('hex'));
-
-
 
 class Blockchain {
   constructor() {
     this.chain = [];
     this.currentTransactions = [];
+
+    this.nodes = new Set();
+
+    this.newBlock(100, 1);
   }
 
   /*
@@ -62,7 +63,7 @@ class Blockchain {
   */
   hash(block) {
 
-    blockStr = JSON.stringify(block);
+    let blockStr = JSON.stringify(block);
 
     return sha256().update(blockStr).digest('hex')
 
@@ -91,28 +92,31 @@ class Blockchain {
   }
 
   /*
-  Validates the Proof: Does hash(lastProof, proof) contain 2 trailing zeroes?
+  Validates the Proof: Does hash(lastProof, proof) contain 3 leading zeroes?
   @param lastProof {Number} Previous Proof
   @param proof {number} Current Proof
   @return {Boolean} True if correct, False if not.
   */
   validProof(lastProof, proof) {
+    let guess = `${lastProof}${proof}`;
+    let guessHash = sha256().update(guess).digest('hex');
+    return guessHash.substring(0,3) === '000';
+  }
+
+
+  registerNode(address) {
+    this.nodes.add(address);
+  }
+
+  validChain(chain) {
 
   }
+
 
 }
 
 
 
-
-
-
-
-
-
-
-console.log('test');
-console.log(Date.now())
 
 
 export default Blockchain;
